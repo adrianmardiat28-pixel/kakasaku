@@ -23,7 +23,7 @@ const CTASection = () => {
           </div>
 
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-6">
-            Jadilah Bagian dari Perubahan
+            Datang Dari Hati
           </h2>
           
           <p className="text-primary-foreground/80 text-lg md:text-xl mb-8 leading-relaxed">

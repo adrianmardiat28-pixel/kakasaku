@@ -28,7 +28,7 @@ const DonasiPage = () => {
   return (
     <>
       <Helmet>
-        <title>Donasi Sekarang - Kakasaku Jakarta Mengabdi</title>
+        <title>Donasi - Kakasaku Jakarta Mengabdi</title>
         <meta 
           name="description" 
           content="Berdonasi untuk program-program sosial di Jakarta. Donasi Anda akan digunakan untuk pendidikan, kesehatan, dan pemberdayaan masyarakat." 

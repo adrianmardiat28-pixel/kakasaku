@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -9,8 +9,8 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                <Heart className="w-5 h-5 text-primary-foreground" />
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+                <img src="/logo.png" alt="Kakasaku" className="w-6 h-6 object-cover" />
               </div>
               <div>
                 <span className="font-serif text-lg font-semibold">Kakasaku</span>
@@ -80,7 +80,7 @@ const Footer = () => {
             © 2024 Kakasaku Jakarta Mengabdi. Hak cipta dilindungi.
           </p>
           <div className="flex items-center gap-1 text-background/50 text-sm">
-            Dibuat dengan <Heart className="w-4 h-4 text-primary fill-primary mx-1" /> untuk Jakarta
+          <img src="/logo.png" alt="Kakasaku" className="w-4 h-4 object-cover mx-1 rounded-sm" /> untuk Jakarta
           </div>
         </div>
       </div>

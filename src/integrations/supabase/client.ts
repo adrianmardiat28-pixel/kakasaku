@@ -2,8 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_ANON_KEY;
+// GANTI BARIS 5 DAN 6 JADI INI:
+const SUPABASE_URL = "https://hierrcgizbjwirnakbro.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_bGVkMGvrs5ZEVO0gfqYjkQ_wMFRB7lV";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

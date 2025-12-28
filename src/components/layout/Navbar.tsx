@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Heart } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
@@ -22,8 +22,8 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center transition-transform group-hover:scale-105">
-              <Heart className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden">
+              <img src="/logo.png" alt="Kakasaku" className="w-6 h-6 object-cover" />
             </div>
             <div className="hidden sm:block">
               <span className="font-serif text-lg font-semibold text-foreground">Kakasaku</span>

@@ -14,7 +14,6 @@ const AdminLoginPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -53,40 +52,26 @@ const AdminLoginPage = () => {
     setIsLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/admin/dashboard`,
-          },
-        });
+      // HANYA Logic Login (Sign In) - Logic Sign Up dihapus
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        toast({
-          title: "Registrasi Berhasil",
-          description: "Silakan login dengan akun Anda.",
-        });
-        setIsSignUp(false);
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Login Berhasil",
-          description: "Selamat datang di Admin Dashboard",
-        });
-      }
+      toast({
+        title: "Login Berhasil",
+        description: "Selamat datang di Admin Dashboard",
+      });
+      
+      // Redirect handled by onAuthStateChange listener
+      
     } catch (error: any) {
       console.error("Auth error:", error);
       toast({
-        title: isSignUp ? "Registrasi Gagal" : "Login Gagal",
-        description: error.message || "Terjadi kesalahan, silakan coba lagi.",
+        title: "Login Gagal",
+        description: "Email atau password salah. Silakan coba lagi.",
         variant: "destructive",
       });
     } finally {
@@ -121,10 +106,10 @@ const AdminLoginPage = () => {
           <div className="bg-card rounded-2xl p-8 shadow-lg border border-border/50">
             <div className="text-center mb-8">
               <h1 className="font-serif text-2xl font-bold text-foreground mb-2">
-                {isSignUp ? "Registrasi Admin" : "Admin Login"}
+                Admin Login
               </h1>
               <p className="text-muted-foreground text-sm">
-                {isSignUp ? "Buat akun admin baru" : "Masuk untuk mengelola donasi"}
+                Masuk untuk mengelola donasi (Khusus Staff)
               </p>
             </div>
 
@@ -176,19 +161,11 @@ const AdminLoginPage = () => {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? "Memproses..." : isSignUp ? "Daftar" : "Masuk"}
+                {isLoading ? "Memproses..." : "Masuk"}
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-sm text-primary hover:underline"
-              >
-                {isSignUp ? "Sudah punya akun? Login" : "Belum punya akun? Daftar"}
-              </button>
-            </div>
+            {/* Link Daftar Dihapus dari sini */}
           </div>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
