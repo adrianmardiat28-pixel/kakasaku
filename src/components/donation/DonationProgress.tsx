@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom"; // Penting: Import ini
 import { motion } from "framer-motion";
 import { Users, Target, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,42 +9,85 @@ interface DonationProgressProps {
 }
 
 const DonationProgress = ({ onDataLoad }: DonationProgressProps) => {
+  // 1. Ambil ID Program dari URL
+  const [searchParams] = useSearchParams();
+  const programId = searchParams.get("program_id");
+
   const [raised, setRaised] = useState(0);
   const [donors, setDonors] = useState(0);
-  const target = 50000000;
-  const progress = Math.min((raised / target) * 100, 100);
+  const [target, setTarget] = useState(50000000); // Default target umum
+
+  // Hitung persentase (cegah error pembagian nol)
+  const progress = target > 0 ? Math.min((raised / target) * 100, 100) : 0;
 
   useEffect(() => {
-    const fetchDonationStats = async () => {
-      const { data, error } = await supabase
-        .from("donations")
-        .select("amount")
-        .eq("type", "umum");
+    const fetchData = async () => {
+      if (programId) {
+        // === SKENARIO A: PROGRAM SPESIFIK ===
+        // Ambil data dari tabel 'programs' berdasarkan ID
+        const { data } = await (supabase as any)
+          .from("programs")
+          .select("raised, target, donors")
+          .eq("id", programId)
+          .single();
 
-      if (!error && data) {
-        const total = data.reduce((sum, d) => sum + d.amount, 0);
-        setRaised(total);
-        setDonors(data.length);
-        if (onDataLoad) onDataLoad({ raised: total, target, donors: data.length });
+        if (data) {
+          setRaised(data.raised);
+          setTarget(data.target);
+          setDonors(data.donors);
+          if (onDataLoad) onDataLoad({ raised: data.raised, target: data.target, donors: data.donors });
+        }
+      } else {
+        // === SKENARIO B: DONASI UMUM ===
+        // Hitung total dari semua donasi bertipe 'umum'
+        const { data, error } = await supabase
+          .from("donations")
+          .select("amount")
+          .eq("type", "umum");
+
+        if (!error && data) {
+          const total = data.reduce((sum, d) => sum + d.amount, 0);
+          setRaised(total);
+          setTarget(50000000); // Target Hardcoded untuk umum
+          setDonors(data.length);
+          if (onDataLoad) onDataLoad({ raised: total, target: 50000000, donors: data.length });
+        }
       }
     };
 
-    fetchDonationStats();
+    fetchData();
 
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel("donations-progress")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "donations" },
-        () => fetchDonationStats()
-      )
-      .subscribe();
+    // === REALTIME UPDATE ===
+    const channel = supabase.channel("progress-realtime");
+
+    if (programId) {
+      // Jika di halaman Program, dengarkan tabel 'programs'
+      channel
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "programs", filter: `id=eq.${programId}` },
+          (payload: any) => {
+            setRaised(payload.new.raised);
+            setDonors(payload.new.donors);
+            setTarget(payload.new.target);
+          }
+        )
+        .subscribe();
+    } else {
+      // Jika di halaman Umum, dengarkan tabel 'donations'
+      channel
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "donations" },
+          () => fetchData()
+        )
+        .subscribe();
+    }
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [onDataLoad]);
+  }, [programId]); // Effect jalan ulang jika ID di URL berubah
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -61,7 +105,9 @@ const DonationProgress = ({ onDataLoad }: DonationProgressProps) => {
           <Target className="w-6 h-6 text-primary" />
         </div>
         <div>
-          <p className="text-muted-foreground text-sm">Target Donasi</p>
+          <p className="text-muted-foreground text-sm">
+            {programId ? "Target Program Ini" : "Target Donasi Umum"}
+          </p>
           <p className="font-serif text-xl font-bold text-foreground">
             {formatCurrency(target)}
           </p>

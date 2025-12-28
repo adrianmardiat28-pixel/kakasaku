@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { motion } from "framer-motion";
-import { Heart, CreditCard, Building2, Wallet } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Heart, CreditCard, Building2, Wallet, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,13 +28,37 @@ interface DonationFormProps {
 }
 
 const DonationForm = ({ onSuccess }: DonationFormProps) => {
+  const [searchParams] = useSearchParams();
+  const programIdFromUrl = searchParams.get("program_id");
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [selectedNominal, setSelectedNominal] = useState<number | null>(null);
   const [customNominal, setCustomNominal] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [programName, setProgramName] = useState<string | null>(null);
+
   const { toast } = useToast();
+
+  // FIX 1: Bypass TypeScript saat ambil judul program
+  useEffect(() => {
+    const fetchProgramDetails = async () => {
+      if (programIdFromUrl) {
+        // Gunakan (supabase as any) agar tidak merah
+        const { data } = await (supabase as any)
+          .from("programs")
+          .select("title")
+          .eq("id", programIdFromUrl)
+          .single();
+        
+        if (data) {
+          setProgramName(data.title);
+        }
+      }
+    };
+    fetchProgramDetails();
+  }, [programIdFromUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,20 +86,26 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("donations").insert({
-        name,
-        email,
-        amount,
-        payment_method: paymentMethod,
-        type: "umum",
-        status: "completed",
-      });
+      // FIX 2: Bypass TypeScript saat insert donasi (karena kolom program_id baru dibuat)
+      const { error } = await (supabase as any)
+        .from("donations")
+        .insert({
+          name,
+          email,
+          amount,
+          payment_method: paymentMethod,
+          type: "umum",
+          status: "completed",
+          program_id: programIdFromUrl || null,
+        });
 
       if (error) throw error;
 
       toast({
         title: "Donasi Berhasil! 🎉",
-        description: "Terima kasih atas kebaikan Anda. Detail pembayaran akan dikirim ke email Anda.",
+        description: programName 
+          ? `Terima kasih telah berdonasi untuk program "${programName}".`
+          : "Terima kasih atas kebaikan Anda. Detail pembayaran telah dikirim.",
       });
 
       // Reset form
@@ -115,8 +146,23 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
         </div>
       </div>
 
+      <AnimatePresence>
+        {programName && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mb-6 bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-start gap-3"
+          >
+            <Target className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-primary mb-1">Donasi ditujukan untuk:</p>
+              <p className="font-serif text-lg font-bold text-foreground">{programName}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="space-y-6">
-        {/* Name */}
         <div className="space-y-2">
           <Label htmlFor="name">Nama Lengkap</Label>
           <Input
@@ -128,7 +174,6 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
           />
         </div>
 
-        {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -141,7 +186,6 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
           />
         </div>
 
-        {/* Nominal */}
         <div className="space-y-3">
           <Label>Pilih Nominal Donasi</Label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -179,7 +223,6 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
           </div>
         </div>
 
-        {/* Payment Method */}
         <div className="space-y-3">
           <Label>Metode Pembayaran</Label>
           <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
